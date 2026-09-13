@@ -1,0 +1,14 @@
+# Impedir a execução de scripts PHP nesta pasta por segurança
+<FilesMatch "\.(php|php3|php4|php5|phtml|pl|py|jsp|asp|htm|shtml|sh|cgi)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Desativar a engine PHP
+php_flag engine off
+
+# Permitir acesso público às imagens (por segurança, garante que imagens renderizem)
+<FilesMatch "\.(jpeg|jpg|png|gif|webp)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>

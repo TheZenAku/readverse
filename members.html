@@ -6,10 +6,6 @@
   <title>Membros — Readverse Wiki</title>
   <meta name="description" content="Veja todos os membros da comunidade Readverse Wiki.">
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 </head>
 <body>
 <div class="glow-orb glow-orb-1"></div>
@@ -88,8 +84,7 @@
 </div>
 
 <script type="module">
-  import './js/firebase-config.js';
-  import './js/auth.js';
+    import './js/auth.js';
   import './js/db.js';
 
   document.getElementById('year').textContent = new Date().getFullYear();
