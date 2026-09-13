@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artigo — Readverse Wiki</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+<div class="glow-orb glow-orb-1"></div>
+<div class="glow-orb glow-orb-2"></div>
+
+<nav class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="8" fill="#1a0a2e"/><path d="M8 28 L20 12 L32 28" stroke="#f0c040" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12 L20 28" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="10" r="2.5" fill="#f0c040"/></svg>
+    <span class="topbar-logo-text">READVERSE</span>
+  </a>
+  <div class="topbar-search">
+    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" placeholder="Buscar..." autocomplete="off">
+  </div>
+  <div class="topbar-actions" id="topbar-user"></div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navegar</div>
+      <a href="index.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Início</a>
+      <a href="wiki.html" class="sidebar-link active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>Artigos & Tópicos</a>
+      <a href="characters.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Personagens</a>
+      <a href="members.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Membros</a>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section" id="sidebar-admin-section" style="display:none">
+      <div class="sidebar-label">Administração</div>
+      <a href="editor.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo Artigo</a>
+      <a href="#" class="sidebar-link" id="sidebar-edit-art"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar este Artigo</a>
+      <div class="sidebar-divider"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Artigos Relacionados</div>
+      <div id="related-articles"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- Breadcrumb -->
+    <div style="display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:0.82rem;margin-bottom:20px" id="breadcrumb">
+      <a href="index.html" style="color:var(--text-muted)">Início</a>
+      <span>›</span>
+      <a href="wiki.html" style="color:var(--text-muted)">Artigos</a>
+      <span>›</span>
+      <span id="breadcrumb-title" style="color:var(--text-secondary)">...</span>
+    </div>
+
+    <div id="loading-state" style="display:flex;justify-content:center;padding:80px"><div class="spinner spinner-lg"></div></div>
+
+    <div id="article-content" class="hidden">
+      <!-- Admin bar -->
+      <div id="admin-bar" class="hidden" style="margin-bottom:24px;padding:12px 16px;background:var(--bg-elevated);border:1px solid var(--border-gold);border-radius:var(--radius);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:0.82rem;color:var(--text-secondary);flex:1">Você pode editar este artigo.</span>
+        <a id="edit-btn" href="#" class="btn btn-gold btn-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Editar
+        </a>
+        <button onclick="confirmDelete()" class="btn btn-danger btn-sm">Excluir</button>
+      </div>
+
+      <div class="wiki-layout">
+        <div>
+          <!-- Cover image -->
+          <div id="cover-container"></div>
+
+          <!-- Header -->
+          <div style="margin-bottom:20px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <span class="badge badge-purple" id="art-category"></span>
+            </div>
+            <h1 id="art-title" style="font-family:var(--font-title);font-size:2.5rem;font-weight:900;line-height:1.1;margin-bottom:12px"></h1>
+            <p id="art-excerpt" style="font-size:1.05rem;color:var(--text-secondary);line-height:1.6;margin-bottom:20px"></p>
+            <div style="display:flex;gap:16px;align-items:center;font-size:0.8rem;color:var(--text-muted);padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+              <span>Por <strong id="art-author" style="color:var(--text-secondary)"></strong></span>
+              <span id="art-date"></span>
+              <span id="art-views"></span>
+            </div>
+          </div>
+
+          <!-- TOC -->
+          <div class="toc" id="toc" style="display:none">
+            <div class="toc-title">📖 Índice</div>
+            <ul class="toc-list" id="toc-list"></ul>
+          </div>
+
+          <!-- Body -->
+          <div class="wiki-content" id="art-body"></div>
+
+          <!-- Meta footer -->
+          <div style="margin-top:48px;padding-top:20px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--text-muted)">
+            Última edição por <strong id="meta-updated-by" style="color:var(--text-secondary)"></strong>
+          </div>
+        </div>
+
+        <!-- Sidebar panel -->
+        <div class="wiki-sidebar-panel">
+          <div class="card" id="sidebar-info" style="display:none">
+            <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:12px">Sobre este artigo</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+              <tr id="info-category" style="display:none"><td style="color:var(--gold);padding:5px 0;font-weight:600;width:50%">Categoria</td><td id="info-cat-val"></td></tr>
+              <tr><td style="color:var(--gold);padding:5px 0;font-weight:600">Criado em</td><td id="info-date"></td></tr>
+              <tr><td style="color:var(--gold);padding:5px 0;font-weight:600">Autor</td><td id="info-author"></td></tr>
+              <tr><td style="color:var(--gold);padding:5px 0;font-weight:600">Visualizações</td><td id="info-views"></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="error-state" class="hidden" style="text-align:center;padding:80px">
+      <h2 style="font-family:var(--font-title);color:var(--text-secondary)">Artigo não encontrado</h2>
+      <a href="wiki.html" class="btn btn-primary mt-3">← Voltar aos Artigos</a>
+    </div>
+
+    <footer class="wiki-footer"><p>Readverse Wiki &copy; <span id="year"></span></p></footer>
+  </main>
+</div>
+
+<script type="module">
+  import './js/firebase-config.js';
+  import './js/auth.js';
+  import './js/db.js';
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+  const params = new URLSearchParams(window.location.search);
+  const articleId = params.get('id');
+
+  authModule.onAuthChange((user, userData) => {
+    authModule.updateTopbarUser(userData);
+    if (authModule.canEdit()) {
+      document.getElementById('sidebar-admin-section').style.display = '';
+      document.getElementById('admin-bar').classList.remove('hidden');
+      document.getElementById('edit-btn').href = `editor.html?id=${articleId}`;
+      document.getElementById('sidebar-edit-art').href = `editor.html?id=${articleId}`;
+    }
+  });
+
+  if (!articleId) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('error-state').classList.remove('hidden');
+  } else {
+    loadArticle();
+  }
+
+  async function loadArticle() {
+    try {
+      const art = await dbModule.getArticle(articleId);
+      if (!art) {
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('error-state').classList.remove('hidden');
+        return;
+      }
+
+      // Increment views
+      dbModule.incrementViews(articleId).catch(() => {});
+
+      document.title = `${art.title} — Readverse Wiki`;
+      document.getElementById('breadcrumb-title').textContent = art.title;
+      document.getElementById('art-title').textContent = art.title;
+      document.getElementById('art-excerpt').textContent = art.excerpt || '';
+      document.getElementById('art-category').textContent = art.category || 'Artigo';
+      document.getElementById('art-author').textContent = art.createdByName || '—';
+      document.getElementById('art-date').textContent = dbModule.formatDate(art.createdAt);
+      document.getElementById('art-views').textContent = `${(art.views || 0) + 1} visualizações`;
+      document.getElementById('meta-updated-by').textContent = art.updatedByName || art.createdByName || '—';
+
+      // Cover
+      if (art.coverURL) {
+        document.getElementById('cover-container').innerHTML = `<img src="${art.coverURL}" alt="${art.title}" style="width:100%;max-height:360px;object-fit:cover;border-radius:var(--radius-lg);margin-bottom:24px">`;
+      }
+
+      // Sidebar info
+      const sidebarInfo = document.getElementById('sidebar-info');
+      sidebarInfo.style.display = '';
+      if (art.category) {
+        document.getElementById('info-category').style.display = '';
+        document.getElementById('info-cat-val').textContent = art.category;
+      }
+      document.getElementById('info-date').textContent = dbModule.formatDate(art.createdAt);
+      document.getElementById('info-author').textContent = art.createdByName || '—';
+      document.getElementById('info-views').textContent = (art.views || 0) + 1;
+
+      // TOC and body
+      const sections = art.sections || [];
+      if (sections.length > 1) {
+        document.getElementById('toc').style.display = '';
+        document.getElementById('toc-list').innerHTML = sections.map((s, i) =>
+          `<li><a href="#section-${i}">${s.title}</a></li>`
+        ).join('');
+      }
+
+      const bodyEl = document.getElementById('art-body');
+      if (art.content) bodyEl.innerHTML += art.content;
+      sections.forEach((s, i) => {
+        bodyEl.innerHTML += `<h2 id="section-${i}">${s.title}</h2><div>${s.content}</div>`;
+      });
+
+      if (!art.content && !sections.length) {
+        bodyEl.innerHTML = '<p style="color:var(--text-muted);font-style:italic">Este artigo ainda não possui conteúdo.</p>';
+      }
+
+      // Related articles
+      const related = await dbModule.getArticles({ category: art.category, limit: 6 });
+      document.getElementById('related-articles').innerHTML = related
+        .filter(a => a.id !== articleId)
+        .slice(0, 5)
+        .map(a => `<a href="article.html?id=${a.id}" class="sidebar-link" style="font-size:0.82rem">${a.title}</a>`)
+        .join('');
+
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('article-content').classList.remove('hidden');
+    } catch (e) {
+      console.error(e);
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').classList.remove('hidden');
+    }
+  }
+
+  window.confirmDelete = async function() {
+    if (!confirm('Tem certeza que deseja excluir este artigo?')) return;
+    await dbModule.deleteArticle(articleId);
+    window.location.href = 'wiki.html';
+  };
+</script>
+</body>
+</html>

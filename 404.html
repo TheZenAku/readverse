@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Página não encontrada — Readverse Wiki</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="glow-orb glow-orb-1"></div>
+<div class="glow-orb glow-orb-2"></div>
+<div class="stars-bg" id="stars-bg"></div>
+
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;position:relative;z-index:1">
+  <div>
+    <div style="font-family:var(--font-title);font-size:clamp(6rem,20vw,12rem);font-weight:900;line-height:1;background:linear-gradient(135deg,var(--gold-light),var(--purple-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px">404</div>
+    <h1 style="font-family:var(--font-title);font-size:1.8rem;margin-bottom:12px;color:var(--text-primary)">Página não encontrada</h1>
+    <p style="color:var(--text-secondary);max-width:400px;margin:0 auto 32px;line-height:1.6">Esta página se perdeu nas páginas do Readverse. Que tal explorar o que temos?</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="index.html" class="btn btn-primary btn-lg">← Voltar ao Início</a>
+      <a href="wiki.html" class="btn btn-ghost btn-lg">Ver Artigos</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const starsEl = document.getElementById('stars-bg');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;--dur:${(Math.random()*3+2).toFixed(1)}s;--min:0.05;--max:${(Math.random()*0.4+0.2).toFixed(2)};animation-delay:${(Math.random()*3).toFixed(1)}s`;
+    starsEl.appendChild(s);
+  }
+</script>
+</body>
+</html>

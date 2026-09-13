@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfil — Readverse Wiki</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+<div class="glow-orb glow-orb-1"></div>
+<div class="glow-orb glow-orb-2"></div>
+
+<nav class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="8" fill="#1a0a2e"/><path d="M8 28 L20 12 L32 28" stroke="#f0c040" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12 L20 28" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="10" r="2.5" fill="#f0c040"/></svg>
+    <span class="topbar-logo-text">READVERSE</span>
+  </a>
+  <div style="flex:1"></div>
+  <div class="topbar-actions" id="topbar-user"></div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navegar</div>
+      <a href="index.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Início</a>
+      <a href="wiki.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>Artigos & Tópicos</a>
+      <a href="characters.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Personagens</a>
+      <a href="members.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Membros</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div id="loading-state" style="display:flex;justify-content:center;padding:80px"><div class="spinner spinner-lg"></div></div>
+
+    <div id="profile-content" class="hidden">
+      <!-- Cover banner -->
+      <div style="height:200px;background:linear-gradient(135deg,#1a0a2e 0%,#3d1c8a 40%,#7c3aed 100%);border-radius:var(--radius-xl);margin-bottom:-60px;position:relative;overflow:hidden">
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,#f0c04020,transparent 60%)"></div>
+      </div>
+
+      <!-- Profile header -->
+      <div style="padding:0 24px;margin-bottom:32px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px">
+          <div style="display:flex;align-items:flex-end;gap:20px">
+            <div style="position:relative">
+              <div id="profile-avatar" style="border:4px solid var(--bg-base)"></div>
+              <div id="change-avatar-btn" class="hidden" style="position:absolute;bottom:4px;right:4px">
+                <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+                <button onclick="document.getElementById('avatar-input').click()" style="width:28px;height:28px;background:var(--purple);border:none;border-radius:50%;color:white;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center" title="Alterar foto">✏</button>
+              </div>
+            </div>
+            <div style="padding-bottom:12px">
+              <h1 id="profile-name" style="font-family:var(--font-title);font-size:1.8rem;font-weight:700;margin-bottom:4px"></h1>
+              <div id="profile-badge-row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
+            </div>
+          </div>
+          <div style="padding-bottom:12px" id="profile-actions"></div>
+        </div>
+      </div>
+
+      <!-- Profile body -->
+      <div style="display:grid;grid-template-columns:280px 1fr;gap:24px;align-items:start">
+        <!-- Left card -->
+        <div>
+          <div class="card mb-2">
+            <h3 style="font-family:var(--font-title);font-size:0.9rem;color:var(--gold);margin-bottom:14px">Informações</h3>
+            <div style="font-size:0.82rem;display:grid;gap:10px">
+              <div style="display:flex;justify-content:space-between">
+                <span style="color:var(--text-muted)">Membro desde</span>
+                <span id="profile-since"></span>
+              </div>
+              <div style="display:flex;justify-content:space-between">
+                <span style="color:var(--text-muted)">Função</span>
+                <span id="profile-role"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bio edit (own profile) -->
+          <div class="card" id="bio-section">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <h3 style="font-family:var(--font-title);font-size:0.9rem;color:var(--gold)">Sobre mim</h3>
+              <button id="edit-bio-btn" class="btn btn-ghost btn-sm hidden" onclick="toggleBioEdit()">Editar</button>
+            </div>
+            <p id="profile-bio" style="color:var(--text-secondary);font-size:0.875rem;line-height:1.6"></p>
+            <div id="bio-edit-form" class="hidden">
+              <textarea class="form-input" id="bio-textarea" rows="4" placeholder="Escreva algo sobre você..."></textarea>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button onclick="saveBio()" class="btn btn-primary btn-sm">Salvar</button>
+                <button onclick="toggleBioEdit()" class="btn btn-ghost btn-sm">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: activity -->
+        <div>
+          <div class="card">
+            <h3 style="font-family:var(--font-title);color:var(--gold);margin-bottom:16px">Atividade na Wiki</h3>
+            <div id="profile-activity">
+              <p style="color:var(--text-muted);font-size:0.875rem;font-style:italic">Sem atividade registrada ainda.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="error-state" class="hidden" style="text-align:center;padding:80px">
+      <h2 style="font-family:var(--font-title);color:var(--text-secondary)">Usuário não encontrado</h2>
+      <a href="members.html" class="btn btn-primary mt-3">← Ver Membros</a>
+    </div>
+
+    <footer class="wiki-footer"><p>Readverse Wiki &copy; <span id="year"></span></p></footer>
+  </main>
+</div>
+
+<div id="alert-toast" class="hidden" style="position:fixed;bottom:24px;right:24px;z-index:999;max-width:320px"></div>
+
+<script type="module">
+  import './js/firebase-config.js';
+  import './js/auth.js';
+  import './js/db.js';
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  const params = new URLSearchParams(window.location.search);
+  const uid = params.get('uid');
+  let profileData = null;
+  let isOwnProfile = false;
+
+  authModule.onAuthChange((user, userData) => {
+    authModule.updateTopbarUser(userData);
+    if (!uid && !user) { window.location.href = 'login.html'; return; }
+    const targetUid = uid || user?.uid;
+    isOwnProfile = user && (user.uid === targetUid);
+    loadProfile(targetUid);
+  });
+
+  async function loadProfile(targetUid) {
+    if (!targetUid) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').classList.remove('hidden');
+      return;
+    }
+    try {
+      profileData = await dbModule.getMember(targetUid);
+      if (!profileData) {
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('error-state').classList.remove('hidden');
+        return;
+      }
+
+      document.title = `${profileData.displayName} — Readverse Wiki`;
+
+      // Avatar
+      document.getElementById('profile-avatar').outerHTML = authModule.renderAvatar(profileData, 'avatar-2xl') + '<div id="change-avatar-btn" class="hidden" style="position:absolute;bottom:4px;right:4px"><input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)"><button onclick="document.getElementById(\'avatar-input\').click()" style="width:28px;height:28px;background:var(--purple);border:none;border-radius:50%;color:white;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center" title="Alterar foto">✏</button></div>';
+
+      // Name & badges
+      document.getElementById('profile-name').textContent = profileData.displayName;
+      const badgeInfo = authModule.getRoleBadge(profileData.role || (profileData.editorPermission ? 'editor' : 'member'));
+      document.getElementById('profile-badge-row').innerHTML = `<span class="badge ${badgeInfo.cls}">${badgeInfo.label}</span>`;
+
+      // Info
+      document.getElementById('profile-since').textContent = dbModule.formatDate(profileData.joinedAt);
+      document.getElementById('profile-role').textContent = badgeInfo.label;
+
+      // Bio
+      const bioEl = document.getElementById('profile-bio');
+      bioEl.textContent = profileData.bio || (isOwnProfile ? 'Adicione uma bio sobre você.' : 'Este membro ainda não adicionou uma bio.');
+
+      if (isOwnProfile) {
+        document.getElementById('edit-bio-btn').classList.remove('hidden');
+        document.getElementById('change-avatar-btn').classList.remove('hidden');
+        document.getElementById('bio-textarea').value = profileData.bio || '';
+        document.getElementById('profile-actions').innerHTML = `
+          <button onclick="authModule.logout()" class="btn btn-ghost">Sair da conta</button>
+        `;
+      }
+
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('profile-content').classList.remove('hidden');
+    } catch (e) {
+      console.error(e);
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').classList.remove('hidden');
+    }
+  }
+
+  window.toggleBioEdit = function() {
+    const form = document.getElementById('bio-edit-form');
+    const bio = document.getElementById('profile-bio');
+    const btn = document.getElementById('edit-bio-btn');
+    const isEditing = !form.classList.contains('hidden');
+    form.classList.toggle('hidden', isEditing);
+    bio.classList.toggle('hidden', !isEditing);
+    btn.textContent = isEditing ? 'Editar' : 'Cancelar';
+  };
+
+  window.saveBio = async function() {
+    const bio = document.getElementById('bio-textarea').value.trim();
+    await dbModule.updateProfile(authModule.currentUser.uid, { bio });
+    document.getElementById('profile-bio').textContent = bio || 'Sem bio.';
+    toggleBioEdit();
+    showToast('Bio atualizada!', 'success');
+  };
+
+  window.uploadAvatar = async function(input) {
+    if (!input.files[0]) return;
+    try {
+      showToast('Enviando foto...', 'info');
+      const url = await authModule.uploadAvatar(input.files[0]);
+      window.location.reload();
+    } catch (e) {
+      showToast('Erro ao enviar: ' + e.message, 'error');
+    }
+  };
+
+  function showToast(msg, type = 'info') {
+    const types = { success: 'alert-success', error: 'alert-error', info: 'alert-info' };
+    const el = document.getElementById('alert-toast');
+    el.className = `alert ${types[type] || 'alert-info'}`;
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 4000);
+  }
+</script>
+</body>
+</html>

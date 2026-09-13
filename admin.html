@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin — Readverse Wiki</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+<div class="glow-orb glow-orb-1"></div>
+
+<nav class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="8" fill="#1a0a2e"/><path d="M8 28 L20 12 L32 28" stroke="#f0c040" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12 L20 28" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="10" r="2.5" fill="#f0c040"/></svg>
+    <span class="topbar-logo-text">READVERSE</span>
+  </a>
+  <div style="flex:1"></div>
+  <div class="topbar-actions" id="topbar-user"></div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navegar</div>
+      <a href="index.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Início</a>
+      <a href="wiki.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>Artigos & Tópicos</a>
+      <a href="characters.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Personagens</a>
+      <a href="members.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Membros</a>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Admin</div>
+      <a href="editor.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo Artigo</a>
+      <a href="character-editor.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Novo Personagem</a>
+      <a href="admin.html" class="sidebar-link active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>Painel Admin</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <div class="page-header-inner">
+        <div>
+          <h1 class="page-title">⚙️ Painel Admin</h1>
+          <p class="page-subtitle">Gerencie membros, permissões e conteúdo da wiki</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid-4 mb-3" id="admin-stats">
+      <div class="card" style="text-align:center">
+        <div id="stat-total-members" style="font-family:var(--font-title);font-size:2.5rem;font-weight:700;color:var(--gold)">—</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">Membros</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <div id="stat-total-articles" style="font-family:var(--font-title);font-size:2.5rem;font-weight:700;color:var(--purple-light)">—</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">Artigos</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <div id="stat-total-chars" style="font-family:var(--font-title);font-size:2.5rem;font-weight:700;color:var(--indigo-light)">—</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">Personagens</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <div id="stat-editors" style="font-family:var(--font-title);font-size:2.5rem;font-weight:700;color:var(--success)">—</div>
+        <div style="font-size:0.8rem;color:var(--text-muted)">Editores</div>
+      </div>
+    </div>
+
+    <!-- Alert -->
+    <div id="admin-alert"></div>
+
+    <!-- Members Management -->
+    <div class="card mb-3">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <h2 class="section-title">Gerenciar Membros</h2>
+        <input type="text" class="form-input" id="admin-member-search" placeholder="Buscar membro..." style="max-width:240px">
+      </div>
+
+      <div id="members-list">
+        <div class="card skeleton" style="height:64px;margin-bottom:8px"></div>
+        <div class="card skeleton" style="height:64px;margin-bottom:8px"></div>
+        <div class="card skeleton" style="height:64px"></div>
+      </div>
+    </div>
+
+    <!-- Content Management -->
+    <div class="grid-2">
+      <!-- Articles -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h2 class="section-title">Artigos</h2>
+          <a href="editor.html" class="btn btn-primary btn-sm">+ Novo</a>
+        </div>
+        <div id="admin-articles-list">
+          <div class="card skeleton" style="height:48px;margin-bottom:6px"></div>
+          <div class="card skeleton" style="height:48px"></div>
+        </div>
+      </div>
+
+      <!-- Characters -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h2 class="section-title">Personagens</h2>
+          <a href="character-editor.html" class="btn btn-gold btn-sm">+ Novo</a>
+        </div>
+        <div id="admin-chars-list">
+          <div class="card skeleton" style="height:48px;margin-bottom:6px"></div>
+          <div class="card skeleton" style="height:48px"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="wiki-footer"><p>Readverse Wiki &copy; <span id="year"></span></p></footer>
+  </main>
+</div>
+
+<script type="module">
+  import './js/firebase-config.js';
+  import './js/auth.js';
+  import './js/db.js';
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+  let allMembers = [];
+
+  authModule.onAuthChange(async (user, userData) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    if (userData?.role !== 'admin') { window.location.href = 'index.html'; return; }
+    authModule.updateTopbarUser(userData);
+    await loadAdminData();
+  });
+
+  async function loadAdminData() {
+    const [members, articles, characters] = await Promise.all([
+      dbModule.getMembers({ limit: 200 }),
+      dbModule.getArticles({ limit: 50 }),
+      dbModule.getCharacters({ limit: 50 }),
+    ]);
+
+    allMembers = members;
+    const editors = members.filter(m => m.editorPermission || m.role === 'editor');
+
+    // Stats
+    document.getElementById('stat-total-members').textContent = members.length;
+    document.getElementById('stat-total-articles').textContent = articles.length;
+    document.getElementById('stat-total-chars').textContent = characters.length;
+    document.getElementById('stat-editors').textContent = editors.length;
+
+    renderMembers(members);
+
+    // Articles list
+    document.getElementById('admin-articles-list').innerHTML = articles.length
+      ? articles.map(art => `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:0.875rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${art.title}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted)">${dbModule.timeAgo(art.createdAt)}</div>
+            </div>
+            <a href="editor.html?id=${art.id}" class="btn btn-ghost btn-sm">Editar</a>
+            <button onclick="deleteArticle('${art.id}')" class="btn btn-danger btn-sm">✕</button>
+          </div>
+        `).join('')
+      : '<p style="color:var(--text-muted);font-size:0.875rem">Nenhum artigo ainda.</p>';
+
+    // Characters list
+    document.getElementById('admin-chars-list').innerHTML = characters.length
+      ? characters.map(char => `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+            ${char.imageURL ? `<img src="${char.imageURL}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid var(--border-light)">` : `<div style="width:36px;height:36px;border-radius:50%;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.7rem">${char.name?.charAt(0) || '?'}</div>`}
+            <div style="flex:1;min-width:0">
+              <div style="font-size:0.875rem;font-weight:500">${char.name}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted)">${char.role || char.species || ''}</div>
+            </div>
+            <a href="character-editor.html?id=${char.id}" class="btn btn-ghost btn-sm">Editar</a>
+            <button onclick="deleteChar('${char.id}')" class="btn btn-danger btn-sm">✕</button>
+          </div>
+        `).join('')
+      : '<p style="color:var(--text-muted);font-size:0.875rem">Nenhum personagem ainda.</p>';
+  }
+
+  function renderMembers(members) {
+    const container = document.getElementById('members-list');
+    if (!members.length) {
+      container.innerHTML = '<p style="color:var(--text-muted)">Nenhum membro encontrado.</p>';
+      return;
+    }
+    container.innerHTML = members.map(m => {
+      const isAdmin = m.role === 'admin';
+      const isEditor = m.editorPermission || m.role === 'editor';
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+          ${authModule.renderAvatar(m, 'avatar-sm')}
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:0.9rem">${m.displayName || 'Usuário'}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted)">${m.email} • Desde ${dbModule.formatDate(m.joinedAt)}</div>
+          </div>
+          <span class="badge ${isAdmin ? 'badge-gold' : isEditor ? 'badge-purple' : 'badge-gray'}">
+            ${isAdmin ? 'Admin' : isEditor ? 'Editor' : 'Membro'}
+          </span>
+          ${!isAdmin ? `
+            <button
+              onclick="toggleEditor('${m.uid || m.id}', ${isEditor})"
+              class="btn ${isEditor ? 'btn-ghost' : 'btn-primary'} btn-sm"
+              title="${isEditor ? 'Remover permissão de editor' : 'Dar permissão de editor'}"
+            >
+              ${isEditor
+                ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Remover Editor'
+                : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Tornar Editor'}
+            </button>
+          ` : '<span style="font-size:0.75rem;color:var(--text-muted)">Você</span>'}
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.toggleEditor = async function(uid, isCurrentlyEditor) {
+    try {
+      await dbModule.updateMemberPermission(uid, !isCurrentlyEditor);
+      showAlert(`Permissão ${!isCurrentlyEditor ? 'concedida' : 'removida'} com sucesso!`, 'success');
+      await loadAdminData();
+    } catch (e) {
+      showAlert('Erro: ' + e.message);
+    }
+  };
+
+  window.deleteArticle = async function(id) {
+    if (!confirm('Excluir este artigo?')) return;
+    await dbModule.deleteArticle(id);
+    showAlert('Artigo excluído.', 'success');
+    await loadAdminData();
+  };
+
+  window.deleteChar = async function(id) {
+    if (!confirm('Excluir este personagem?')) return;
+    await dbModule.deleteCharacter(id);
+    showAlert('Personagem excluído.', 'success');
+    await loadAdminData();
+  };
+
+  // Member search
+  document.getElementById('admin-member-search').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    renderMembers(q ? allMembers.filter(m =>
+      m.displayName?.toLowerCase().includes(q) ||
+      m.email?.toLowerCase().includes(q)
+    ) : allMembers);
+  });
+
+  function showAlert(msg, type = 'error') {
+    const el = document.getElementById('admin-alert');
+    el.innerHTML = `<div class="alert alert-${type}" style="margin-bottom:16px">${msg}</div>`;
+    setTimeout(() => el.innerHTML = '', 4000);
+  }
+</script>
+</body>
+</html>

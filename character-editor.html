@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor de Personagem — Readverse Wiki</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <style>
+    .section-editor {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .section-editor .remove-section {
+      position: absolute; top: 12px; right: 12px;
+      background: none; border: none;
+      color: var(--text-muted); cursor: pointer;
+      font-size: 1.2rem; line-height: 1;
+      transition: color var(--transition);
+    }
+    .section-editor .remove-section:hover { color: var(--error); }
+    .image-preview {
+      width: 200px; height: 280px;
+      object-fit: cover; border-radius: var(--radius);
+      border: 2px solid var(--border-light);
+      display: block;
+    }
+    .gallery-upload-item {
+      position: relative;
+      display: inline-block;
+    }
+    .gallery-upload-item img {
+      width: 100px; height: 100px;
+      object-fit: cover;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .gallery-upload-item .remove-gallery {
+      position: absolute; top: -6px; right: -6px;
+      background: var(--error); color: white;
+      border: none; border-radius: 50%;
+      width: 20px; height: 20px;
+      font-size: 0.7rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .form-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 768px) { .form-cols { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="glow-orb glow-orb-1"></div>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="8" fill="#1a0a2e"/><path d="M8 28 L20 12 L32 28" stroke="#f0c040" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12 L20 28" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="10" r="2.5" fill="#f0c040"/></svg>
+    <span class="topbar-logo-text">READVERSE</span>
+  </a>
+  <div style="flex:1"></div>
+  <div class="topbar-actions" id="topbar-user"></div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navegar</div>
+      <a href="index.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Início</a>
+      <a href="characters.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Personagens</a>
+      <a href="character-editor.html" class="sidebar-link active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Editor de Personagem</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <div class="page-header-inner">
+        <div>
+          <h1 class="page-title" id="editor-title">Novo Personagem</h1>
+          <p class="page-subtitle">Preencha as informações da ficha do personagem</p>
+        </div>
+        <div class="flex gap-1">
+          <button onclick="saveDraft()" class="btn btn-ghost" id="draft-btn">Salvar rascunho</button>
+          <button onclick="saveCharacter()" class="btn btn-gold" id="save-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Publicar Personagem
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="alert-container"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start">
+      <!-- LEFT COLUMN -->
+      <div>
+        <!-- Basic Info -->
+        <div class="card mb-3">
+          <h3 style="font-family:var(--font-title);margin-bottom:20px;color:var(--gold)">Informações Básicas</h3>
+
+          <div class="form-group">
+            <label class="form-label">Nome do Personagem *</label>
+            <input class="form-input" id="char-name" placeholder="Nome completo do personagem" required>
+          </div>
+
+          <div class="form-cols">
+            <div class="form-group">
+              <label class="form-label">Papel / Função</label>
+              <input class="form-input" id="char-role" placeholder="Ex: Protagonista, Vilão, Aliado...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select class="form-input" id="char-status">
+                <option value="">— Selecionar —</option>
+                <option value="Vivo">Vivo</option>
+                <option value="Morto">Morto</option>
+                <option value="Desaparecido">Desaparecido</option>
+                <option value="Desconhecido">Desconhecido</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-cols">
+            <div class="form-group">
+              <label class="form-label">Espécie / Raça</label>
+              <input class="form-input" id="char-species" placeholder="Ex: Humano, Élfico, Híbrido...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Gênero</label>
+              <input class="form-input" id="char-gender" placeholder="Ex: Masculino, Feminino, Não-binário...">
+            </div>
+          </div>
+
+          <div class="form-cols">
+            <div class="form-group">
+              <label class="form-label">Idade</label>
+              <input class="form-input" id="char-age" placeholder="Ex: 24 anos, Imortal, Desconhecida...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Data de Nascimento</label>
+              <input class="form-input" id="char-birthdate" placeholder="Ex: 12 de março, Ano 304...">
+            </div>
+          </div>
+
+          <div class="form-cols">
+            <div class="form-group">
+              <label class="form-label">Afiliação</label>
+              <input class="form-input" id="char-affiliation" placeholder="Ex: Guilda dos Magos, Exército...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ocupação</label>
+              <input class="form-input" id="char-occupation" placeholder="Ex: Guerreiro, Mago, Ladrão...">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Habilidades / Poderes</label>
+            <input class="form-input" id="char-abilities" placeholder="Ex: Magia de fogo, Velocidade sobre-humana, Invisibilidade...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Primeira Aparição</label>
+            <input class="form-input" id="char-first-appear" placeholder="Ex: Capítulo 1, Livro I, Volume 3...">
+          </div>
+        </div>
+
+        <!-- Biography -->
+        <div class="card mb-3">
+          <h3 style="font-family:var(--font-title);margin-bottom:20px;color:var(--gold)">Biografia</h3>
+          <div class="form-group">
+            <label class="form-label">Introdução / Resumo</label>
+            <textarea class="form-input" id="char-bio" placeholder="Escreva uma introdução curta sobre o personagem (aparece no topo da página)..." rows="4"></textarea>
+          </div>
+        </div>
+
+        <!-- Sections -->
+        <div class="card mb-3">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <h3 style="font-family:var(--font-title);color:var(--gold)">Seções da História</h3>
+            <button onclick="addSection()" class="btn btn-primary btn-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Adicionar Seção
+            </button>
+          </div>
+          <div id="sections-container">
+            <p style="color:var(--text-muted);font-size:0.875rem">Clique em "Adicionar Seção" para criar seções como "História", "Personalidade", "Relacionamentos", etc.</p>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="card">
+          <h3 style="font-family:var(--font-title);margin-bottom:20px;color:var(--gold)">Tags</h3>
+          <div class="form-group">
+            <label class="form-label">Tags (separadas por vírgula)</label>
+            <input class="form-input" id="char-tags" placeholder="Ex: Herói, Magia, Mundo de Lyr, Antagonista...">
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px">As tags ajudam na navegação e filtragem de personagens.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Images -->
+      <div style="position:sticky;top:calc(var(--topbar-h) + 20px)">
+        <!-- Profile image -->
+        <div class="card mb-2">
+          <h3 style="font-family:var(--font-title);margin-bottom:16px;color:var(--gold)">Foto de Perfil</h3>
+          <div style="text-align:center">
+            <div id="profile-img-preview" style="margin-bottom:16px">
+              <div style="width:200px;height:280px;background:var(--bg-elevated);border:2px dashed var(--border-light);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;margin:0 auto;color:var(--text-muted);font-size:0.8rem;flex-direction:column;gap:8px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Sem foto
+              </div>
+            </div>
+            <input type="file" id="profile-img-input" accept="image/*" style="display:none" onchange="previewProfileImg(this)">
+            <button onclick="document.getElementById('profile-img-input').click()" class="btn btn-ghost w-full btn-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+              Upload de Foto
+            </button>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px">JPG, PNG ou WebP. Proporção 3:4 recomendada.</div>
+          </div>
+        </div>
+
+        <!-- Gallery -->
+        <div class="card">
+          <h3 style="font-family:var(--font-title);margin-bottom:16px;color:var(--gold)">Galeria</h3>
+          <div id="gallery-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+          <input type="file" id="gallery-input" accept="image/*" multiple style="display:none" onchange="addGalleryImages(this)">
+          <button onclick="document.getElementById('gallery-input').click()" class="btn btn-ghost w-full btn-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+            Adicionar Imagens
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="wiki-footer"><p>Readverse Wiki &copy; <span id="year"></span></p></footer>
+  </main>
+</div>
+
+<script type="module">
+  import './js/firebase-config.js';
+  import './js/auth.js';
+  import './js/db.js';
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  const params = new URLSearchParams(window.location.search);
+  const editId = params.get('id');
+  let profileImageFile = null;
+  let galleryFiles = [];
+  let existingGalleryUrls = [];
+  let sectionCount = 0;
+
+  // Require editor permission
+  authModule.onAuthChange((user, userData) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    if (!authModule.canEdit()) { window.location.href = 'index.html'; return; }
+    authModule.updateTopbarUser(userData);
+  });
+
+  // Load existing character for edit
+  if (editId) {
+    document.getElementById('editor-title').textContent = 'Editar Personagem';
+    loadExisting();
+  }
+
+  async function loadExisting() {
+    const char = await dbModule.getCharacter(editId);
+    if (!char) return;
+    document.getElementById('char-name').value = char.name || '';
+    document.getElementById('char-role').value = char.role || '';
+    document.getElementById('char-status').value = char.status || '';
+    document.getElementById('char-species').value = char.species || '';
+    document.getElementById('char-gender').value = char.gender || '';
+    document.getElementById('char-age').value = char.age || '';
+    document.getElementById('char-birthdate').value = char.birthdate || '';
+    document.getElementById('char-affiliation').value = char.affiliation || '';
+    document.getElementById('char-occupation').value = char.occupation || '';
+    document.getElementById('char-abilities').value = char.abilities || '';
+    document.getElementById('char-first-appear').value = char.firstAppear || '';
+    document.getElementById('char-bio').value = char.biography || '';
+    document.getElementById('char-tags').value = (char.tags || []).join(', ');
+
+    if (char.imageURL) {
+      document.getElementById('profile-img-preview').innerHTML = `<img src="${char.imageURL}" class="image-preview" style="margin:0 auto">`;
+    }
+
+    existingGalleryUrls = char.gallery || [];
+    renderGalleryPreviews();
+
+    (char.sections || []).forEach(s => addSection(s.title, s.content));
+  }
+
+  window.addSection = function(title = '', content = '') {
+    const idx = sectionCount++;
+    const container = document.getElementById('sections-container');
+    // Clear placeholder
+    const placeholder = container.querySelector('p');
+    if (placeholder) placeholder.remove();
+
+    const div = document.createElement('div');
+    div.className = 'section-editor';
+    div.dataset.idx = idx;
+    div.innerHTML = `
+      <button class="remove-section" onclick="this.closest('.section-editor').remove()" title="Remover seção">✕</button>
+      <div class="form-group">
+        <label class="form-label">Título da Seção</label>
+        <input class="form-input section-title-input" value="${title}" placeholder="Ex: História, Personalidade, Relacionamentos...">
+      </div>
+      <div>
+        <label class="form-label">Conteúdo</label>
+        <div class="editor-toolbar">
+          <button type="button" class="toolbar-btn" onclick="fmt(this,'bold')" title="Negrito"><b>B</b></button>
+          <button type="button" class="toolbar-btn" onclick="fmt(this,'italic')" title="Itálico"><i>I</i></button>
+          <div class="toolbar-sep"></div>
+          <button type="button" class="toolbar-btn" onclick="fmt(this,'insertUnorderedList')" title="Lista">•</button>
+          <button type="button" class="toolbar-btn" onclick="insertBlockquote(this)" title="Citação">❝</button>
+        </div>
+        <div class="editor-content section-content" contenteditable="true">${content}</div>
+      </div>
+    `;
+    container.appendChild(div);
+  };
+
+  window.fmt = function(btn, cmd) {
+    const editor = btn.closest('.section-editor').querySelector('.section-content');
+    editor.focus();
+    document.execCommand(cmd, false, null);
+  };
+
+  window.insertBlockquote = function(btn) {
+    const editor = btn.closest('.section-editor').querySelector('.section-content');
+    editor.focus();
+    document.execCommand('formatBlock', false, 'blockquote');
+  };
+
+  window.previewProfileImg = function(input) {
+    if (!input.files[0]) return;
+    profileImageFile = input.files[0];
+    const url = URL.createObjectURL(profileImageFile);
+    document.getElementById('profile-img-preview').innerHTML = `<img src="${url}" class="image-preview" style="margin:0 auto">`;
+  };
+
+  window.addGalleryImages = function(input) {
+    const files = Array.from(input.files);
+    galleryFiles.push(...files);
+    renderGalleryPreviews();
+  };
+
+  function renderGalleryPreviews() {
+    const container = document.getElementById('gallery-preview');
+    const existingHtml = existingGalleryUrls.map((url, i) => `
+      <div class="gallery-upload-item">
+        <img src="${url}" alt="">
+        <button class="remove-gallery" onclick="removeExistingGallery(${i})">✕</button>
+      </div>
+    `).join('');
+    const newHtml = galleryFiles.map((f, i) => `
+      <div class="gallery-upload-item">
+        <img src="${URL.createObjectURL(f)}" alt="">
+        <button class="remove-gallery" onclick="removeNewGallery(${i})">✕</button>
+      </div>
+    `).join('');
+    container.innerHTML = existingHtml + newHtml;
+  }
+
+  window.removeExistingGallery = function(i) {
+    existingGalleryUrls.splice(i, 1);
+    renderGalleryPreviews();
+  };
+  window.removeNewGallery = function(i) {
+    galleryFiles.splice(i, 1);
+    renderGalleryPreviews();
+  };
+
+  function showAlert(msg, type = 'error') {
+    document.getElementById('alert-container').innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function collectSections() {
+    return Array.from(document.querySelectorAll('.section-editor')).map(div => ({
+      title: div.querySelector('.section-title-input').value,
+      content: div.querySelector('.section-content').innerHTML,
+    })).filter(s => s.title || s.content);
+  }
+
+  window.saveCharacter = async function() {
+    const name = document.getElementById('char-name').value.trim();
+    if (!name) { showAlert('O nome do personagem é obrigatório.'); return; }
+
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px"></div> Salvando...';
+
+    try {
+      // Upload profile image
+      let imageURL = null;
+      if (profileImageFile) {
+        imageURL = await dbModule.uploadCharacterImage(profileImageFile, editId || name.toLowerCase().replace(/\s+/g, '-'));
+      } else if (editId) {
+        // Keep existing
+        const existing = await dbModule.getCharacter(editId);
+        imageURL = existing?.imageURL || null;
+      }
+
+      // Upload gallery
+      const newGalleryUrls = await Promise.all(
+        galleryFiles.map(f => dbModule.uploadImage(f, `gallery/${Date.now()}_${f.name}`))
+      );
+      const gallery = [...existingGalleryUrls, ...newGalleryUrls];
+
+      const tags = document.getElementById('char-tags').value
+        .split(',').map(t => t.trim()).filter(Boolean);
+
+      const data = {
+        name,
+        role:        document.getElementById('char-role').value.trim(),
+        status:      document.getElementById('char-status').value,
+        species:     document.getElementById('char-species').value.trim(),
+        gender:      document.getElementById('char-gender').value.trim(),
+        age:         document.getElementById('char-age').value.trim(),
+        birthdate:   document.getElementById('char-birthdate').value.trim(),
+        affiliation: document.getElementById('char-affiliation').value.trim(),
+        occupation:  document.getElementById('char-occupation').value.trim(),
+        abilities:   document.getElementById('char-abilities').value.trim(),
+        firstAppear: document.getElementById('char-first-appear').value.trim(),
+        biography:   document.getElementById('char-bio').value.trim(),
+        sections:    collectSections(),
+        tags,
+        imageURL,
+        gallery,
+        published: true,
+      };
+
+      const id = await dbModule.saveCharacter(data, editId);
+      window.location.href = `character.html?id=${id}`;
+    } catch (e) {
+      showAlert('Erro ao salvar: ' + e.message);
+      btn.disabled = false;
+      btn.innerHTML = 'Publicar Personagem';
+    }
+  };
+
+  window.saveDraft = function() {
+    showAlert('Rascunho salvo localmente (função completa requer Firebase configurado).', 'info');
+  };
+</script>
+</body>
+</html>

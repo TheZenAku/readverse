@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personagens — Readverse Wiki</title>
+  <meta name="description" content="Explore todos os personagens do universo Readverse.">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+<div class="glow-orb glow-orb-1"></div>
+<div class="glow-orb glow-orb-2"></div>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="8" fill="#1a0a2e"/><path d="M8 28 L20 12 L32 28" stroke="#f0c040" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12 L20 28" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="10" r="2.5" fill="#f0c040"/></svg>
+    <span class="topbar-logo-text">READVERSE</span>
+  </a>
+  <div class="topbar-search">
+    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="search-input" placeholder="Buscar personagens..." autocomplete="off">
+    <div class="search-results hidden" id="search-results"></div>
+  </div>
+  <div class="topbar-actions" id="topbar-user">
+    <a href="login.html" class="btn btn-ghost btn-sm">Entrar</a>
+    <a href="login.html?tab=register" class="btn btn-primary btn-sm">Criar conta</a>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navegar</div>
+      <a href="index.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Início</a>
+      <a href="wiki.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>Artigos & Tópicos</a>
+      <a href="characters.html" class="sidebar-link active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Personagens</a>
+      <a href="members.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Membros</a>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section" id="sidebar-admin-section" style="display:none">
+      <div class="sidebar-label">Administração</div>
+      <a href="editor.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Novo Artigo</a>
+      <a href="character-editor.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Novo Personagem</a>
+      <a href="admin.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 0 14.14 0"/></svg>Painel Admin</a>
+      <div class="sidebar-divider"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Filtros</div>
+      <a href="characters.html" class="sidebar-link" id="filter-all">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Todos
+      </a>
+      <div id="sidebar-tags"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <div class="page-header-inner">
+        <div>
+          <h1 class="page-title">Personagens</h1>
+          <p class="page-subtitle" id="char-count">Carregando...</p>
+        </div>
+        <div class="flex gap-1" id="editor-actions" style="display:none!important">
+          <a href="character-editor.html" class="btn btn-gold">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Novo Personagem
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap" id="filter-bar">
+      <input type="text" class="form-input" id="char-search" placeholder="🔍 Filtrar personagens..." style="max-width:300px">
+    </div>
+
+    <!-- Character Grid -->
+    <div class="grid-4" id="chars-grid" style="align-items:start">
+      <div class="card skeleton" style="height:300px"></div>
+      <div class="card skeleton" style="height:300px"></div>
+      <div class="card skeleton" style="height:300px"></div>
+      <div class="card skeleton" style="height:300px"></div>
+    </div>
+
+    <div id="empty-state" class="hidden" style="text-align:center;padding:80px 20px">
+      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="color:var(--text-muted);margin:0 auto 16px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <h3 style="font-family:var(--font-title);color:var(--text-secondary);margin-bottom:8px">Nenhum personagem encontrado</h3>
+      <p style="color:var(--text-muted)" id="empty-msg">Ainda não há personagens na wiki.</p>
+      <a href="character-editor.html" class="btn btn-gold mt-3" id="empty-create" style="display:none">Criar Personagem</a>
+    </div>
+
+    <footer class="wiki-footer"><p>Readverse Wiki &copy; <span id="year"></span></p></footer>
+  </main>
+</div>
+
+<script type="module">
+  import './js/firebase-config.js';
+  import './js/auth.js';
+  import './js/db.js';
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  let allChars = [];
+
+  authModule.onAuthChange((user, userData) => {
+    authModule.updateTopbarUser(userData);
+    if (authModule.canEdit()) {
+      document.getElementById('editor-actions').style.display = 'flex';
+      document.getElementById('sidebar-admin-section').style.display = '';
+      document.getElementById('empty-create').style.display = '';
+    }
+  });
+
+  async function loadCharacters() {
+    allChars = await dbModule.getCharacters({ limit: 100 });
+    document.getElementById('char-count').textContent = `${allChars.length} personagem${allChars.length !== 1 ? 's' : ''} na wiki`;
+
+    // Build tag filter
+    const allTags = [...new Set(allChars.flatMap(c => c.tags || []))];
+    const tagEl = document.getElementById('sidebar-tags');
+    tagEl.innerHTML = allTags.map(t => `
+      <a href="#" class="sidebar-link tag-filter" data-tag="${t}" onclick="filterByTag('${t}');return false">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        ${t}
+      </a>
+    `).join('');
+
+    renderChars(allChars);
+  }
+
+  window.filterByTag = function(tag) {
+    const filtered = allChars.filter(c => c.tags?.includes(tag));
+    renderChars(filtered);
+    document.querySelectorAll('.tag-filter').forEach(el => el.classList.toggle('active', el.dataset.tag === tag));
+  };
+
+  // Search filter
+  document.getElementById('char-search').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    const filtered = allChars.filter(c =>
+      c.name?.toLowerCase().includes(q) ||
+      c.role?.toLowerCase().includes(q) ||
+      c.species?.toLowerCase().includes(q) ||
+      c.tags?.some(t => t.toLowerCase().includes(q))
+    );
+    renderChars(filtered);
+  });
+
+  function renderChars(chars) {
+    const grid = document.getElementById('chars-grid');
+    const empty = document.getElementById('empty-state');
+
+    if (!chars.length) {
+      grid.innerHTML = '';
+      empty.classList.remove('hidden');
+      const q = document.getElementById('char-search').value;
+      document.getElementById('empty-msg').textContent = q ? `Nenhum personagem encontrado para "${q}".` : 'Ainda não há personagens na wiki.';
+      return;
+    }
+    empty.classList.add('hidden');
+
+    grid.innerHTML = chars.map(char => `
+      <a href="character.html?id=${char.id}" class="char-card fade-in">
+        ${char.imageURL
+          ? `<img src="${char.imageURL}" class="char-card-image" alt="${char.name}" loading="lazy">`
+          : `<div class="char-card-image-placeholder">
+              <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.25"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+             </div>`}
+        <div class="char-card-body">
+          <div class="char-card-name">${char.name}</div>
+          ${char.role ? `<div class="char-card-role">${char.role}</div>` : ''}
+          ${char.species ? `<div style="font-size:0.78rem;color:var(--text-muted)">${char.species}</div>` : ''}
+          ${char.status ? `<div style="margin-top:6px"><span class="badge ${char.status === 'Vivo' ? 'badge-green' : char.status === 'Morto' ? 'badge-red' : 'badge-gray'}">${char.status}</span></div>` : ''}
+          ${char.tags?.length ? `<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">${char.tags.slice(0,3).map(t => `<span class="badge badge-purple">${t}</span>`).join('')}</div>` : ''}
+        </div>
+      </a>
+    `).join('');
+  }
+
+  loadCharacters().catch(console.error);
+</script>
+</body>
+</html>

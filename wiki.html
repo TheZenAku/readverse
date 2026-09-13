@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artigos & Tópicos — Readverse Wiki</title>
+  <meta name="description" content="Explore todos os artigos e tópicos da Readverse Wiki.">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+<div class="glow-orb glow-orb-1"></div>
+<div class="glow-orb glow-orb-2"></div>
+
+<nav class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="8" fill="#1a0a2e"/><path d="M8 28 L20 12 L32 28" stroke="#f0c040" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12 L20 28" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="10" r="2.5" fill="#f0c040"/></svg>
+    <span class="topbar-logo-text">READVERSE</span>
+  </a>
+  <div class="topbar-search">
+    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="search-input" placeholder="Buscar artigos..." autocomplete="off">
+    <div class="search-results hidden" id="search-results"></div>
+  </div>
+  <div class="topbar-actions" id="topbar-user">
+    <a href="login.html" class="btn btn-ghost btn-sm">Entrar</a>
+    <a href="login.html?tab=register" class="btn btn-primary btn-sm">Criar conta</a>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navegar</div>
+      <a href="index.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Início</a>
+      <a href="wiki.html" class="sidebar-link active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>Artigos & Tópicos</a>
+      <a href="characters.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Personagens</a>
+      <a href="members.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Membros</a>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section" id="sidebar-admin-section" style="display:none">
+      <div class="sidebar-label">Administração</div>
+      <a href="editor.html" class="sidebar-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo Artigo</a>
+      <div class="sidebar-divider"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Categorias</div>
+      <a href="wiki.html" class="sidebar-link" id="cat-all" onclick="filterCat(null);return false">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Todos
+      </a>
+      <div id="sidebar-categories"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <div class="page-header-inner">
+        <div>
+          <h1 class="page-title">Artigos & Tópicos</h1>
+          <p class="page-subtitle" id="article-count">Carregando...</p>
+        </div>
+        <a href="editor.html" class="btn btn-primary" id="new-article-btn" style="display:none">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo Artigo
+        </a>
+      </div>
+    </div>
+
+    <!-- Filter/Search bar -->
+    <div style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap">
+      <input type="text" class="form-input" id="article-search" placeholder="🔍 Filtrar artigos..." style="max-width:320px">
+      <select class="form-input" id="sort-select" style="max-width:200px">
+        <option value="newest">Mais recentes</option>
+        <option value="oldest">Mais antigos</option>
+        <option value="alpha">Alfabético</option>
+      </select>
+    </div>
+
+    <!-- Active category filter -->
+    <div id="active-filter" class="hidden" style="margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <span class="badge badge-purple" id="filter-label"></span>
+      <button onclick="filterCat(null)" class="btn btn-ghost btn-sm">× Remover filtro</button>
+    </div>
+
+    <!-- Articles grid -->
+    <div class="grid-3" id="articles-grid">
+      <div class="card skeleton" style="height:220px"></div>
+      <div class="card skeleton" style="height:220px"></div>
+      <div class="card skeleton" style="height:220px"></div>
+    </div>
+
+    <div id="empty-state" class="hidden" style="text-align:center;padding:80px 20px">
+      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="color:var(--text-muted);margin:0 auto 16px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+      <h3 style="font-family:var(--font-title);color:var(--text-secondary);margin-bottom:8px">Nenhum artigo encontrado</h3>
+      <p style="color:var(--text-muted)" id="empty-msg">Ainda não há artigos na wiki.</p>
+      <a href="editor.html" class="btn btn-primary mt-3" id="empty-create" style="display:none">Criar Artigo</a>
+    </div>
+
+    <footer class="wiki-footer"><p>Readverse Wiki &copy; <span id="year"></span></p></footer>
+  </main>
+</div>
+
+<script type="module">
+  import './js/firebase-config.js';
+  import './js/auth.js';
+  import './js/db.js';
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+  let allArticles = [];
+  let currentCat = null;
+
+  authModule.onAuthChange((user, userData) => {
+    authModule.updateTopbarUser(userData);
+    if (authModule.canEdit()) {
+      document.getElementById('new-article-btn').style.display = '';
+      document.getElementById('sidebar-admin-section').style.display = '';
+      document.getElementById('empty-create').style.display = '';
+    }
+  });
+
+  // URL category filter
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('category')) {
+    currentCat = urlParams.get('category');
+  }
+
+  async function loadArticles() {
+    allArticles = await dbModule.getArticles({ limit: 100 });
+    document.getElementById('article-count').textContent = `${allArticles.length} artigo${allArticles.length !== 1 ? 's' : ''} na wiki`;
+
+    // Categories sidebar
+    const categories = await dbModule.getCategories();
+    document.getElementById('sidebar-categories').innerHTML = categories.map(c => `
+      <a href="#" class="sidebar-link cat-link" data-slug="${c.slug}" onclick="filterCat('${c.slug}');return false">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        ${c.name}
+      </a>
+    `).join('');
+
+    if (currentCat) filterCat(currentCat);
+    else renderArticles(allArticles);
+  }
+
+  window.filterCat = function(slug) {
+    currentCat = slug;
+    const filterEl = document.getElementById('active-filter');
+    if (slug) {
+      filterEl.classList.remove('hidden');
+      filterEl.style.display = 'flex';
+      document.getElementById('filter-label').textContent = slug;
+    } else {
+      filterEl.classList.add('hidden');
+    }
+    document.querySelectorAll('.cat-link').forEach(l => l.classList.toggle('active', l.dataset.slug === slug));
+    document.getElementById('cat-all').classList.toggle('active', !slug);
+    const filtered = slug ? allArticles.filter(a => dbModule.slugify(a.category || '') === slug) : allArticles;
+    renderArticles(filtered);
+  };
+
+  // Search
+  document.getElementById('article-search').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    const base = currentCat ? allArticles.filter(a => dbModule.slugify(a.category || '') === currentCat) : allArticles;
+    const filtered = q ? base.filter(a =>
+      a.title?.toLowerCase().includes(q) ||
+      a.excerpt?.toLowerCase().includes(q) ||
+      a.category?.toLowerCase().includes(q)
+    ) : base;
+    renderArticles(filtered);
+  });
+
+  // Sort
+  document.getElementById('sort-select').addEventListener('change', function() {
+    const val = this.value;
+    let sorted = [...allArticles];
+    if (val === 'alpha') sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    else if (val === 'oldest') sorted.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+    renderArticles(sorted);
+  });
+
+  function renderArticles(articles) {
+    const grid = document.getElementById('articles-grid');
+    const empty = document.getElementById('empty-state');
+    if (!articles.length) {
+      grid.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+    grid.innerHTML = articles.map(art => `
+      <a href="article.html?id=${art.id}" class="article-card fade-in">
+        ${art.coverURL
+          ? `<img src="${art.coverURL}" class="article-card-image" alt="${art.title}" loading="lazy">`
+          : `<div class="article-card-image-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg></div>`}
+        <div class="article-card-body">
+          <div class="article-card-type">${art.category || 'Artigo'}</div>
+          <div class="article-card-title">${art.title}</div>
+          <div class="article-card-excerpt">${art.excerpt || ''}</div>
+        </div>
+        <div class="article-card-footer">
+          <span>${art.createdByName || ''}</span>
+          <span>${dbModule.timeAgo(art.createdAt)}</span>
+        </div>
+      </a>
+    `).join('');
+  }
+
+  loadArticles().catch(console.error);
+</script>
+</body>
+</html>
